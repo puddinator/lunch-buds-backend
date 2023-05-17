@@ -5,7 +5,6 @@ const HttpError = require("../models/http-error");
 require("dotenv").config();
 
 const API_KEY = `${process.env.GEOLOCATION_API_KEY}`;
-console.log(API_KEY);
 
 async function getCoordsForAddress(address) {
   // return {
