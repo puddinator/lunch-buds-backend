@@ -1,5 +1,4 @@
 /* eslint-disable consistent-return */
-// const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
 const { default: mongoose } = require("mongoose");
 
