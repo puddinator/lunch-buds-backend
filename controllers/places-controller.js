@@ -1,8 +1,8 @@
 /* eslint-disable consistent-return */
 // const { v4: uuid } = require("uuid");
 const { validationResult } = require("express-validator");
-
 const { default: mongoose } = require("mongoose");
+
 const HttpError = require("../models/http-error");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
@@ -29,15 +29,15 @@ const getPlaceById = async (req, res, next) => {
 const getPlacesByUserid = async (req, res, next) => {
   const userId = req.params.pid;
 
-  let places;
+  let userWithPlaces;
   try {
-    places = await Place.find({ creator: userId });
+    userWithPlaces = await User.findById(userId).populate("places");
   } catch (err) {
     const error = new HttpError("something went wrong with mongoose", 500);
     return next(error);
   }
 
-  if (!places || places.length === 0) {
+  if (!userWithPlaces || userWithPlaces.places.length === 0) {
     const error = new HttpError(
       "Could not find places for provided user id.",
       404
@@ -45,7 +45,9 @@ const getPlacesByUserid = async (req, res, next) => {
     return next(error);
   }
   res.json({
-    places: places.map((place) => place.toObject({ getters: true })),
+    places: userWithPlaces.places.map((place) =>
+      place.toObject({ getters: true })
+    ),
   });
 };
 
@@ -140,7 +142,7 @@ const deletePlace = async (req, res, next) => {
 
   let place;
   try {
-    place = await Place.findById(placeId);
+    place = await Place.findById(placeId).populate("creator");
   } catch (err) {
     const error = new HttpError("mongoose find didn't work", 500);
     return next(error);
@@ -151,7 +153,11 @@ const deletePlace = async (req, res, next) => {
   }
 
   try {
-    await place.deleteOne();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await place.deleteOne({ session: sess });
+    place.creator.places.pull(place);
+    await place.creator.save({ session: sess });
   } catch (err) {
     const error = new HttpError(err, 500);
     return next(error);
