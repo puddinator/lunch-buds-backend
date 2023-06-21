@@ -4,10 +4,12 @@ const { validationResult } = require("express-validator");
 const HttpError = require("../models/http-error");
 const User = require("../models/user");
 
-const getUsers = async (req, res, next) => {
+const getOpenToMatchUsers = async (req, res, next) => {
   let users;
+
+  const filter = { openToMatch: true };
   try {
-    users = await User.find({}, "-password");
+    users = await User.find(filter, "-password");
   } catch {
     return next(new HttpError("unable to fetch users", 500));
   }
@@ -21,7 +23,7 @@ const signUp = async (req, res, next) => {
     return next(new HttpError("invalid inputs passed!", 422));
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, number, interests } = req.body;
 
   let existingUser;
   try {
@@ -39,10 +41,15 @@ const signUp = async (req, res, next) => {
   const createdUser = new User({
     name,
     email,
-    image:
-      "https://www.google.com/images/branding/googlelogo/2x/googlelogo_light_color_272x92dp.png",
     password,
-    places: [],
+    number,
+    interests,
+    apples: 0,
+    trees: [],
+    vouchers: [],
+    openToMatch: false,
+    matchDateTime: "",
+    pastMatches: [],
   });
 
   try {
@@ -72,12 +79,148 @@ const login = async (req, res, next) => {
   }
 
   if (!existingUser || existingUser.password !== password) {
-    throw new HttpError("User email or password wrong");
+    const error = new HttpError("User email or password wrong", 500);
+    return next(error);
   }
 
-  res.json({ message: "Logged in" });
+  res.json({
+    message: "Logged in",
+    user: existingUser.toObject({ getters: true }),
+  });
 };
 
-exports.getUsers = getUsers;
+const updateOpenToMatchStatus = async (req, res, next) => {
+  const { email, matchDateTimeStart, matchDateTimeEnd } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    const error = new HttpError("Logging in failed", 422);
+    return next(error);
+  }
+
+  if (!existingUser) {
+    const error = new HttpError("No User", 500);
+    return next(error);
+  }
+
+  existingUser.openToMatch = !existingUser.openToMatch;
+  existingUser.matchDateTime = {
+    start: matchDateTimeStart,
+    end: matchDateTimeEnd,
+  };
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError("update status failed...", 500);
+    return next(error);
+  }
+
+  res.json({
+    message: "Updated",
+    user: existingUser.toObject({ getters: true }),
+  });
+};
+
+const updateApples = async (req, res, next) => {
+  const { email, apples } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    const error = new HttpError("Logging in failed", 422);
+    return next(error);
+  }
+
+  if (!existingUser) {
+    const error = new HttpError("No User", 500);
+    return next(error);
+  }
+
+  existingUser.apples = apples;
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError("update status failed...", 500);
+    return next(error);
+  }
+
+  res.json({
+    message: "Updated",
+    user: existingUser.toObject({ getters: true }),
+  });
+};
+
+const updateTrees = async (req, res, next) => {
+  const { email, trees } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    const error = new HttpError("Logging in failed", 422);
+    return next(error);
+  }
+
+  if (!existingUser) {
+    const error = new HttpError("No User", 500);
+    return next(error);
+  }
+
+  existingUser.trees = trees;
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError("update status failed...", 500);
+    return next(error);
+  }
+
+  res.json({
+    message: "Updated",
+    user: existingUser.toObject({ getters: true }),
+  });
+};
+
+const updateVouchers = async (req, res, next) => {
+  const { email, vouchers } = req.body;
+
+  let existingUser;
+  try {
+    existingUser = await User.findOne({ email });
+  } catch (err) {
+    const error = new HttpError("Logging in failed", 422);
+    return next(error);
+  }
+
+  if (!existingUser) {
+    const error = new HttpError("No User", 500);
+    return next(error);
+  }
+
+  existingUser.vouchers = vouchers;
+
+  try {
+    await existingUser.save();
+  } catch (err) {
+    const error = new HttpError("update status failed...", 500);
+    return next(error);
+  }
+
+  res.json({
+    message: "Updated",
+    user: existingUser.toObject({ getters: true }),
+  });
+};
+
+exports.getOpenToMatchUsers = getOpenToMatchUsers;
 exports.signUp = signUp;
 exports.login = login;
+exports.updateOpenToMatchStatus = updateOpenToMatchStatus;
+exports.updateApples = updateApples;
+exports.updateTrees = updateTrees;
+exports.updateVouchers = updateVouchers;
