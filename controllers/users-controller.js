@@ -18,17 +18,13 @@ const getOpenToMatchUsers = async (req, res, next) => {
 };
 
 const signUp = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(new HttpError("invalid inputs passed!", 422));
-  }
-
   const { name, email, password, number, interests } = req.body;
 
   let existingUser;
   try {
     existingUser = await User.findOne({ email });
   } catch (err) {
+    console.log("here!");
     const error = new HttpError("Sign up failed", 422);
     return next(error);
   }
