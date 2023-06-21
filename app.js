@@ -1,9 +1,10 @@
+/* eslint-disable consistent-return */
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 require("dotenv").config();
 
-const placesRoutes = require("./routes/places-route");
+const matchesRoutes = require("./routes/matches-route");
 const usersRoutes = require("./routes/users-route");
 const HttpError = require("./models/http-error");
 
@@ -21,16 +22,16 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api/places", placesRoutes);
-
 app.use("/api/users", usersRoutes);
+app.use("/api/matches", matchesRoutes); // this will only show connected matches
 
+// if it is not a known route, throw error
 app.use(() => {
   const error = new HttpError("Could not find route", 404);
   throw error;
 });
 
-// eslint-disable-next-line consistent-return
+// catch errors to send away
 app.use((error, req, res, next) => {
   if (res.headerSent) {
     return next(error);
