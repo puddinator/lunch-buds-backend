@@ -65,6 +65,7 @@ const createMatch = async (req, res, next) => {
     commonInterests,
   });
 
+  console.log("hi", createdMatch);
   try {
     const sess = await mongoose.startSession();
     sess.startTransaction();
@@ -177,17 +178,20 @@ const getPromptsByMatchId = async (req, res, next) => {
     return next(error);
   }
 
-  const query = `Generate 10 conversation prompts for ${
+  const query = `You are an assistant that speaks only in JSON. Do not write in normal text.
+  Generate 5 conversation prompts for ${
     isCreator ? creator.name : target.name
-  } for a conversation with ${isCreator ? target.name : creator.name}. 
-  Make it personalized and based on their interests. 
+  } to ask ${isCreator ? target.name : creator.name} in a conversation. 
   ${isCreator ? creator.name : target.name}'s interests: ${
     isCreator ? creator.interests : target.interests
   }. 
   ${isCreator ? target.name : creator.name}'s interests: ${
     isCreator ? target.interests : creator.interests
   }. 
-  Reply in the following JSON format: prompts: ["Example Conversation Prompt 1", "Example Conversation Prompt 2"] and so on...`;
+  Make it personalized by addressing the question to ${
+    isCreator ? target.name : creator.name
+  } and tailor the conversation prompts based on both their interests. 
+  Reply in the following JSON format: {"prompts": ["Prompt 1", "Prompt 2"]} and so on...`;
 
   const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY,
@@ -198,11 +202,12 @@ const getPromptsByMatchId = async (req, res, next) => {
     model: "text-davinci-003",
     prompt: query,
     temperature: 0.6,
+    max_tokens: 500,
   });
 
-  console.log(completion);
+  const prompts = completion.data.choices[0].text;
 
-  res.json({ completion });
+  res.json(JSON.parse(prompts));
 };
 
 exports.getMatchesByUserId = getMatchesByUserId;
