@@ -15,11 +15,6 @@ router.patch(
   usersControllers.updateOpenToMatchStatus
 );
 
-router.patch(
-  "/updateOpenToMatchStatus",
-  usersControllers.updateOpenToMatchStatus
-);
-
 router.patch("/updateApples", usersControllers.updateApples);
 
 router.patch("/updateTrees", usersControllers.updateTrees);
