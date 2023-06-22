@@ -43,7 +43,7 @@ const signUp = async (req, res, next) => {
     apples: 0,
     trees: [],
     vouchers: [],
-    openToMatch: false,
+    openToMatch: true,
     matchDateTime: "",
     pastMatches: [],
   });
